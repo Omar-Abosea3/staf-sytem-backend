@@ -44,7 +44,7 @@ export const addStatistics = asyncHandeller(async (req: Request, res: Response, 
 
 export const getStafManStatistics = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
     const {id} = req.params;
-    const statistic = await statisticsModel.find({staf:id}).populate('staf');
+    const statistic = await statisticsModel.find({"رقم العامل":id}).populate('staf');
     console.log(statistic);
     
     if(!statistic){
