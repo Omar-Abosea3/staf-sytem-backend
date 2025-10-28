@@ -98,6 +98,7 @@ export const addNationalIDs = asyncHandeller(
         upsert: true,
       },
     }));
+  console.log(operations);
   
     try {
       await NationalIDModel.bulkWrite(operations, { ordered: false });

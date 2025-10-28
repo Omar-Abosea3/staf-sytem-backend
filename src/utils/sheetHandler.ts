@@ -11,8 +11,10 @@ export default sheetHandeler;
 export const dataDateFormatter = (data : any[] ) => {
     const newData = data.map((item:any , index) => {
         if(index === 0) return;
-        const year = item['الشهر'].slice(0,4);
-        const month = item['الشهر'].slice(4,item['الشهر'].length);
+        console.log(typeof item['الشهر']);
+        
+        const year = item['الشهر']?.toString().slice(0,4);
+        const month = item['الشهر']?.toString().slice(4,item['الشهر'].length);
         item['الشهر'] = new Date(`${year}-${month}`);
         return item;
     });
