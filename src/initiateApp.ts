@@ -30,7 +30,7 @@ const corsMiddleware = (req: Request, res: Response,  next: NextFunction) => {
     }
 };
 const bootstrap = (app:any , express:any) => {
-    app.use(corsMiddleware);
+    app.use(cors({origin: '*'  , credentials: true}));
     app.use(express.json());
     app.use('/uploads', express.static(path.join('uploads')));
     app.use('/api/v1', router);

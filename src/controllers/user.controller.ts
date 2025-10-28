@@ -95,6 +95,9 @@ export const login = asyncHandeller(
       return next(new Error("user not found", { cause: 400 }));
     }
     const comparedPassword = compareSync(password, user.password);
+    if (!comparedPassword) {
+      return next(new Error("incorrect password", { cause: 400 }));
+    }
     const token = createToken(user._id.toString(), user.user_Name, user.role);
     user.tokens = [...user.tokens, token];
     await user.save();
