@@ -52,5 +52,3 @@ export const getStafManStatistics = asyncHandeller(async (req: Request, res: Res
   }
   return res.status(200).json({ message: "statistic added successfully", data: statistic });
 });
-
-

@@ -27,11 +27,11 @@ export const signup = asyncHandeller(
         nationalID,
         password: hashedPassword,
       };
-      const nationalIdData = {
-        nationalID,
-        role,
-      };
-      await NationalIDModel.create(nationalIdData);
+      // const nationalIdData = {
+      //   nationalID,
+      //   role,
+      // };
+      // await NationalIDModel.create(nationalIdData);
       const user = await UserModel.create(userData);
       const token = createToken(user._id.toString(), user.user_Name, user.role);
       console.log(token);
