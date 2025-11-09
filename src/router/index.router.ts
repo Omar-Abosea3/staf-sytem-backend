@@ -7,6 +7,7 @@ import halfMounthBonusRouter from './halfMounthBonus.router.js';
 import employeeAllowncesRouter from './employeeAllownces.router.js';
 import departmentRouter from './department.router.js';
 import notificationsRouter from './notifications.router.js';
+import servicesDetailsRouter from './servicesDetails.router.js';
 
 const router = Router();
 
@@ -16,10 +17,12 @@ router.use('/half-month-bonus', halfMounthBonusRouter);
 router.use('/employee-allownces', employeeAllowncesRouter);
 router.use('/departments', departmentRouter);
 router.use('/notifications', notificationsRouter);
+router.use('/services-details', servicesDetailsRouter);
 router.post('/test-exel-upload', multerFunction().single('file'), async (req, res) => {
     const filePath = req.file?.path;
     console.log(filePath);
     const data = sheetHandeler(filePath!);
     return res.json({ message: "success", data });
 })
-export default router; 
+
+export default router;

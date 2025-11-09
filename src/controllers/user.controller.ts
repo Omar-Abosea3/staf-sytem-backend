@@ -5,6 +5,7 @@ import fs from "fs";
 import { hashSync, compareSync } from "bcrypt";
 import { createToken } from "../utils/token-manager.js";
 import authenticateUser from "../utils/authinticateUser.js";
+import MonthelyPayrollModel from "../DB/models/monthlyPayrollModel.js";
 
 
 export const login = asyncHandeller(
@@ -37,4 +38,66 @@ export const logout = asyncHandeller(
   }
 );
 
+
+export const getDashboardStates = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => { // Get unique employees
+    const uniqueEmployees = await MonthelyPayrollModel.distinct('pyempl');
+
+    // Calculate totals
+    const payrollData = await MonthelyPayrollModel.find();
+    const totalPayroll = payrollData.reduce((sum, record) => sum + record['اجمالي الدخل'], 0);
+
+    // const deductionsData = await TotalDeductionModel.find();
+    // const totalDeductions = deductionsData.reduce((sum, record) => sum + record.totalDeductions, 0);
+
+    // const allowancesData = await StaffAllowanceModel.find();
+    // const totalAllowances = allowancesData.reduce((sum, record) => sum + record.amount, 0);
+
+    // Monthly data for charts
+    const monthlyData = await MonthelyPayrollModel.aggregate([
+      {
+        $group: {
+          _id: '$مرتب شهر',
+          payroll: { $sum: '$اجمالي الدخل' },
+          deductions: { $sum: '$اجمالي الاستقطاعات' }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 12 }
+    ]);
+
+    // Department data
+    const departmentData = await MonthelyPayrollModel.aggregate([
+      {
+        $group: {
+          _id: '$الادارة',
+          employees: { $addToSet: '$pyempl' },
+          totalPayroll: { $sum: '$الصافي' }
+        }
+      },
+      {
+        $project: {
+          department: '$_id',
+          employees: { $size: '$employees' },
+          totalPayroll: 1
+        }
+      }
+    ]);
+
+    res.json({
+      totalEmployees: uniqueEmployees.length,
+      totalPayroll,
+      // totalDeductions,
+      // totalAllowances,
+      monthlyData: monthlyData.map(m => ({
+        month: m._id,
+        payroll: m.payroll,
+        deductions: m.deductions,
+        allowances: 0 // Calculate from allowances collection
+      })),
+      departmentData: departmentData.map(d => ({
+        department: d.department,
+        employees: d.employees,
+        totalPayroll: d.totalPayroll
+      }))
+    });})
 

@@ -57,11 +57,28 @@ const validationSchemas = {
         }),
         bntbsal: Joi.number().optional().default(0),
         'الاجر الاساسي': Joi.number().optional().default(0),
-        'مكافاة الوزير': Joi.number().optional().default(0),
+        'مكافأة الوزير': Joi.number().optional().default(0),
         'الاستقطاعات': Joi.number().optional().default(0),
         'قرض الاسكان': Joi.number().optional().default(0),
-        'صافي مكافاة نصف الشهر': Joi.number().optional().default(0),
+        'صافي مكافأة نصف الشهر': Joi.number().optional().default(0),
         bodays: Joi.number().optional().default(0),
+        month: Joi.string().optional()
+    }).unknown(true),
+
+    servicesDetails: Joi.object({
+        code: Joi.number().required().messages({
+            'number.base': 'code must be a number',
+            'any.required': 'code is required'
+        }),
+        pyempl: Joi.string().required().trim().messages({
+            'string.base': 'pyempl must be a string',
+            'string.empty': 'pyempl cannot be empty',
+            'any.required': 'pyempl is required'
+        }),
+        net: Joi.string().required().messages({
+            'string.base': 'net must be a string',
+            'any.required': 'net is required'
+        }),
         month: Joi.string().optional()
     }).unknown(true)
 };
@@ -102,7 +119,7 @@ export const validateExcelData = (modelType: keyof typeof validationSchemas) => 
                 return next(new Error("Excel file is empty", { cause: 400 }));
             }
             console.log(data);
-            
+
             // Validate each row using Joi
             const errors: string[] = [];
             const validatedData: ExcelRowData[] = [];

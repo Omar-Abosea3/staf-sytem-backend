@@ -3,6 +3,8 @@ import { asyncHandeller } from "../utils/errorHandlig.js";
 import sheetHandeler from "../utils/sheetHandler.js";
 import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
+import { ApiFeatures } from "../utils/apiFeatures.js";
+
 export const addEmployeeAllowances = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
     const filePath = req.file?.path;
     console.log(filePath);
@@ -36,4 +38,27 @@ export const getAllEmployeeAllowances = asyncHandeller(async (req: Request, res:
         return next(new Error("Failed to get employeeAllowances", { cause: 400 }));
     }
     return res.status(200).json({ message: "success", data: employeeAllowances });
+});
+
+export const getAllEmployeeAllowancesWithFilters = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
+    // Build the query using ApiFeatures for filtering, sorting, searching, and pagination
+    const apiFeatures = new ApiFeatures(EmployeeAllowancesModel.find(), req.query)
+        .search()
+        .filters()
+        .sort()
+        .pagination();
+
+    // Execute the query
+    const allowances = await apiFeatures.mongooseQuery;
+
+    // Get total count for pagination metadata
+    const totalCount = await EmployeeAllowancesModel.countDocuments();
+
+    return res.status(200).json({
+        message: "success",
+        data: allowances,
+        totalCount,
+        page: req.query.page || 1,
+        size: req.query.size || allowances.length
+    });
 });

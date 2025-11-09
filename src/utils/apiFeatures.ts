@@ -1,4 +1,4 @@
-import { Model, Document, Query } from 'mongoose'; // Importing necessary Mongoose types
+﻿import { Model, Document, Query } from 'mongoose'; // Importing necessary Mongoose types
 import paginationFunction from './pagination.js';
 
 // Define the type for the query data
@@ -34,14 +34,19 @@ export class ApiFeatures<T extends Document> {
     return this;
   }
 
-  // Search method to filter by title or description
+  // Search method to filter by multiple fields
   search(): this {
     const { searchKey } = this.queryData;
     if (searchKey) {
       const search = {
         $or: [
           { name: { $regex: searchKey, $options: 'i' } },
-          { CDM: { $regex: searchKey, $options: 'i' } }
+          { CDM: { $regex: searchKey, $options: 'i' } },
+          { pyempl: { $regex: searchKey, $options: 'i' } },
+          { 'الادارة': { $regex: searchKey, $options: 'i' } },
+          { 'البند': { $regex: searchKey, $options: 'i' } },
+          { 'الرقم الوظيفي': { $regex: searchKey, $options: 'i' } },
+          { 'الاسم': { $regex: searchKey, $options: 'i' } }
         ],
       };
       this.mongooseQuery.find(search);

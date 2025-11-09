@@ -3,6 +3,8 @@ import { asyncHandeller } from "../utils/errorHandlig.js";
 import sheetHandeler, { ExcelRowData } from "../utils/sheetHandler.js";
 import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
+import { ApiFeatures } from "../utils/apiFeatures.js";
+
 export const addDepartments = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
     const filePath = req.file?.path;
     console.log(filePath);
@@ -33,4 +35,27 @@ export const getAllDepartments = asyncHandeller(async (req: Request, res: Respon
         return next(new Error("Failed to get Departments", { cause: 400 }));
     }
     return res.status(200).json({ message: "success", data: employeeAllowances });
+});
+
+export const getAllDepartmentsWithFilters = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
+    // Build the query using ApiFeatures for filtering, sorting, searching, and pagination
+    const apiFeatures = new ApiFeatures(DepartmentModel.find(), req.query)
+        .search()
+        .filters()
+        .sort()
+        .pagination();
+
+    // Execute the query
+    const departments = await apiFeatures.mongooseQuery;
+
+    // Get total count for pagination metadata
+    const totalCount = await DepartmentModel.countDocuments();
+
+    return res.status(200).json({
+        message: "success",
+        data: departments,
+        totalCount,
+        page: req.query.page || 1,
+        size: req.query.size || departments.length
+    });
 });
