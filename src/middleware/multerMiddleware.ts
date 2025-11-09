@@ -17,13 +17,12 @@ export const multerFunction = () => {
   const fileFilter = function (_req: any, file: any, cb: any) {
     const allowedMimeTypes = [
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // ✅ .xlsx
-      "application/vnd.ms-excel", // ✅ .xls
       "text/csv", // ✅ .csv
     ];
 
     if (!allowedMimeTypes.includes(file.mimetype))
       return cb(
-        new Error(`Only .xlsx, .xls, or .csv files are allowed!`, {
+        new Error(`Only .xlsx files are allowed!`, {
           cause: 409,
         })
       );

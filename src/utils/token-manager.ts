@@ -5,9 +5,8 @@ import {NextFunction} from 'express';
 import { Payload } from '../types/Payload.js';
 
 
-export const createToken = (id:string , userName:string|null = null , role:string , expiresIn:string = "7d") => {
-    const payload : Payload = {id , role};
-    if(userName) payload.userName = userName;
+export const createToken = (id:string , userName:string , expiresIn:string = "1d") => {
+    const payload : Payload = {id , userName};
     const token = jwt.sign(payload , process.env.JWT_SECRET , {expiresIn : expiresIn});
     return token;
 }

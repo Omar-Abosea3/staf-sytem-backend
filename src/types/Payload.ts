@@ -3,7 +3,6 @@ import { Types } from "mongoose";
 export type Payload = {
     id : string;
     userName? : string;
-    role : string;
     exp?:Date;
 }
 

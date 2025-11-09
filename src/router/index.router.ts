@@ -1,10 +1,25 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import usersRouter from './users.router.js';
-import statisticsRouter from './statistics.router.js';
-import nationalIDRouter from './notionalID.router.js';
+import monthlyPayrollRouter from './monthelyPayroll.router.js';
+import { multerFunction } from '../middleware/multerMiddleware.js';
+import sheetHandeler from '../utils/sheetHandler.js';
+import halfMounthBonusRouter from './halfMounthBonus.router.js';
+import employeeAllowncesRouter from './employeeAllownces.router.js';
+import departmentRouter from './department.router.js';
+import notificationsRouter from './notifications.router.js';
+
 const router = Router();
 
-router.use('/users' , usersRouter);
-router.use('/statistics' , statisticsRouter);
-router.use('/national-ids' , nationalIDRouter);
+router.use('/users', usersRouter);
+router.use('/monthly-payroll', monthlyPayrollRouter);
+router.use('/half-month-bonus', halfMounthBonusRouter);
+router.use('/employee-allownces', employeeAllowncesRouter);
+router.use('/departments', departmentRouter);
+router.use('/notifications', notificationsRouter);
+router.post('/test-exel-upload', multerFunction().single('file'), async (req, res) => {
+    const filePath = req.file?.path;
+    console.log(filePath);
+    const data = sheetHandeler(filePath!);
+    return res.json({ message: "success", data });
+})
 export default router; 
