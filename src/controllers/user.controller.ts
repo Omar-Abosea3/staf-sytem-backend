@@ -7,27 +7,29 @@ import { createToken } from "../utils/token-manager.js";
 import authenticateUser from "../utils/authinticateUser.js";
 import MonthelyPayrollModel from "../DB/models/monthlyPayrollModel.js";
 import parseNumber from "../utils/convertStrNum.js";
+import { systemRoles } from "../utils/systemRoles.js";
 
 
 export const login = asyncHandeller(
   async (req: Request, res: Response, next: NextFunction) => {
     const { userName, password } = req.body;
-    const { user, groups } = await authenticateUser(userName, password);
-    console.log(user ,groups);
-    console.log(userName);
+    // const { user, groups } = await authenticateUser(userName, password);
+    // console.log(user ,groups);
+    // console.log(userName);
     
-    const adKey = parseNumber(userName) ||"0000";
-    console.log(adKey);
-    if (!user) return next(new Error("Invalid credentials", { cause: 400 }));
+    // const adKey = parseNumber(userName) ||"0000";
+    // console.log(adKey);
+    // if (!user) return next(new Error("Invalid credentials", { cause: 400 }));
     const foundedDBUser = await UserModel.findOne({ userName });
-    if (!foundedDBUser) {
-      const hashedPassword = hashSync(password, parseInt(process.env.SALT) || 10);
-      const newUser = await UserModel.create({ userName, password: hashedPassword, adKey, groups: groups});
-      const token: string = createToken(newUser._id.toString(), newUser.userName);
-      newUser.tokens = [...newUser.tokens, token];
-      await newUser.save();
-      return res.status(200).json({ message: "success", data: { userName: newUser.userName, adKey }, token });
-    }
+    // if (!foundedDBUser) {
+    //   const hashedPassword = hashSync(password, parseInt(process.env.SALT) || 10);
+    //   const isAdmin = groups.join(' ').toLowerCase().includes("admin");
+    //   const newUser = await UserModel.create({ userName, password: hashedPassword, adKey, groups: groups , role:isAdmin?systemRoles.ADMIN:systemRoles.STAF});
+    //   const token: string = createToken(newUser._id.toString(), newUser.userName);
+    //   newUser.tokens = [...newUser.tokens, token];
+    //   await newUser.save();
+    //   return res.status(200).json({ message: "success", data: { userName: newUser.userName, adKey }, token });
+    // }
     const token: string = createToken(foundedDBUser._id.toString(), foundedDBUser.userName);
     foundedDBUser.tokens = [...foundedDBUser.tokens, token];
     await foundedDBUser.save();

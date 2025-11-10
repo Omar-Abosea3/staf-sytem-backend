@@ -8,7 +8,8 @@ const userSchema = new Schema(
     password: { type: String, required: true },
     groups: [{ type: String, required: true, trim: true }],
     adKey: { type: String, required: true, unique: true, trim: true , default:"0000" },
-    tokens: [String]
+    tokens: [String],
+    role: { type: String, enum: [systemRoles.STAF, systemRoles.ADMIN]},
   },
   {
     timestamps: true,
