@@ -1,10 +1,8 @@
 import {Schema , model } from "mongoose";
 
 const employeeAllowancesSchema = new Schema({
-  "كود رقم": {
-    type: Number,
-    required: true,
-    unique: true, // لأن الكود رقم يبدو إنه معرف فريد
+  _id: {
+    type: String,
   },
   "البند": {
     type: String,

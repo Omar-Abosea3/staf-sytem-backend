@@ -111,5 +111,5 @@ export const getDashboardStates = asyncHandeller(async (req: Request, res: Respo
         employees: d.employees,
         totalPayroll: d.totalPayroll
       }))
-    });})
+});})
 

@@ -1,14 +1,17 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, Types } from "mongoose";
+import { deducationTypes } from "../../utils/deducationType.js";
 
 const deductionsSchema = new Schema({
-    pyempl:{type:String , required:true},
-    deducationCode:{type:String , required:true},
-    deducationName:{type:String , required:true},
-    net:{type:Number , default:0},
-    deducationModel:{type:String , required:true , enum:["راتب شهري" , "نصف شهري" , "أرباح"]},
+    inempl:{type:String , required:true},
+    inlncd:{type:Types.ObjectId , ref:"DeducationCode" , required:true},
+    name:{type:String , required:true},
+    insval:{type:Number , default:0},
+    deducationModel:{type:String , required:true , enum:[...deducationTypes.month , ...deducationTypes.halfMonth , deducationTypes.year]},
     month:{type:String , required:true}
 },{
-    timestamps:true
+    timestamps:true,
+    toJSON:{virtuals:true},
+    toObject:{virtuals:true}
 });
 
 const DeducationModel = model('Deducation' , deductionsSchema);

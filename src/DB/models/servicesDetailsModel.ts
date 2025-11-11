@@ -1,8 +1,9 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 
 const servicesDetailsSchema = new Schema({
     code:{
-        type:Number,
+        type:Types.ObjectId,
+        ref:"MedicalItem",
         required:true
     },
     pyempl:{

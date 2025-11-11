@@ -1,16 +1,28 @@
 import { Schema ,model } from 'mongoose';
 
 const departmentSchema = new Schema({
-  "الادارة": {
+  department: {
     type: String,
     required: true,
     trim: true
   },
-  pyempl: {
+  msempl: {
     type: String,
     required: true,
     unique: true,
     trim: true
+  },
+  msname: {
+    type: String,
+    required: true,
+    trim: true,
+    unique: true
+  },
+  msnama: {
+    type: String,
+    required: true,
+    trim: true,
+    unique: true
   }
 }, { timestamps: true });
 

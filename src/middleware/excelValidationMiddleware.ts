@@ -55,13 +55,11 @@ const validationSchemas = {
             'string.empty': 'الاسم cannot be empty',
             'any.required': 'الاسم is required'
         }),
-        bntbsal: Joi.number().optional().default(0),
         'الاجر الاساسي': Joi.number().optional().default(0),
         'مكافأة الوزير': Joi.number().optional().default(0),
         'الاستقطاعات': Joi.number().optional().default(0),
         'قرض الاسكان': Joi.number().optional().default(0),
         'صافي مكافأة نصف الشهر': Joi.number().optional().default(0),
-        bodays: Joi.number().optional().default(0),
         month: Joi.string().optional()
     }).unknown(true),
 
@@ -80,6 +78,48 @@ const validationSchemas = {
             'any.required': 'net is required'
         }),
         month: Joi.string().optional()
+    }).unknown(true),
+
+    deduction: Joi.object({
+        inempl: Joi.string().required().trim().messages({
+            'string.base': 'inempl must be a string',
+            'string.empty': 'inempl cannot be empty',
+            'any.required': 'inempl is required'
+        }),
+        inlncd: Joi.string().required().trim().messages({
+            'string.base': 'inlncd must be a string',
+            'string.empty': 'inlncd cannot be empty',
+            'any.required': 'inlncd is required'
+        }),
+        name: Joi.string().required().trim().messages({
+            'string.base': 'name must be a string',
+            'string.empty': 'name cannot be empty',
+            'any.required': 'name is required'
+        }),
+        insval: Joi.number().optional().default(0),
+        deducationModel: Joi.string().required().messages({
+            'string.base': 'deducationModel must be a string',
+            'string.empty': 'deducationModel cannot be empty',
+            'any.required': 'deducationModel is required'
+        }),
+        month: Joi.string().required().messages({
+            'string.base': 'month must be a string',
+            'string.empty': 'month cannot be empty',
+            'any.required': 'month is required'
+        })
+    }).unknown(true),
+
+    deductionCode: Joi.object({
+        _id: Joi.string().required().trim().messages({
+            'string.base': '_id must be a string',
+            'string.empty': '_id cannot be empty',
+            'any.required': '_id is required'
+        }),
+        lnnam: Joi.string().required().trim().messages({
+            'string.base': 'lnnam must be a string',
+            'string.empty': 'lnnam cannot be empty',
+            'any.required': 'lnnam is required'
+        }),
     }).unknown(true)
 };
 
