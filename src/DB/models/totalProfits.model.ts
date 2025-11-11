@@ -14,7 +14,6 @@ const totalProfitsSchema = new mongoose.Schema({
   "مبلغ المكافأة":{ type: Number, default: 0 },
   "صافي مكافاة": { type: Number, default: 0 },
   "تامين ادخاري": { type: Number, default: 0 },
-  "شهر المرتبات": { type: String },
 }, { timestamps: true });
 
 const HalfMonthBonusModel = mongoose.model("TotalProfits", totalProfitsSchema);

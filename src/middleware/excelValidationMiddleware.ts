@@ -97,20 +97,15 @@ const validationSchemas = {
             'any.required': 'name is required'
         }),
         insval: Joi.number().optional().default(0),
-        deducationModel: Joi.string().required().messages({
+        deducationModel: Joi.string().optional().messages({
             'string.base': 'deducationModel must be a string',
             'string.empty': 'deducationModel cannot be empty',
             'any.required': 'deducationModel is required'
         }),
-        month: Joi.string().required().messages({
-            'string.base': 'month must be a string',
-            'string.empty': 'month cannot be empty',
-            'any.required': 'month is required'
-        })
     }).unknown(true),
 
     deductionCode: Joi.object({
-        _id: Joi.string().required().trim().messages({
+        lncod: Joi.string().required().trim().messages({
             'string.base': '_id must be a string',
             'string.empty': '_id cannot be empty',
             'any.required': '_id is required'
@@ -120,6 +115,31 @@ const validationSchemas = {
             'string.empty': 'lnnam cannot be empty',
             'any.required': 'lnnam is required'
         }),
+    }).unknown(true),
+
+    totalProfits: Joi.object({
+        "رقم العامل": Joi.string().required().trim().messages({
+            'string.base': 'رقم العامل must be a string',
+            'string.empty': 'رقم العامل cannot be empty',
+            'any.required': 'رقم العامل is required'
+        }),
+        "اسم العامل": Joi.string().required().trim().messages({
+            'string.base': 'اسم العامل must be a string',
+            'string.empty': 'اسم العامل cannot be empty',
+            'any.required': 'اسم العامل is required'
+        }),
+        "القروض": Joi.number().optional().default(0),
+        loan1: Joi.number().optional().default(0),
+        loan2: Joi.number().optional().default(0),
+        "قرض الإسكان": Joi.number().optional().default(0),
+        "المرتب الاساسي": Joi.number().optional().default(0),
+        "معاش تكميلي": Joi.number().optional().default(0),
+        "الاستقطاعات": Joi.number().optional().default(0),
+        "م نهايه خدمه": Joi.number().optional().default(0),
+        "مبلغ المكافأة": Joi.number().optional().default(0),
+        "صافي مكافاة": Joi.number().optional().default(0),
+        "تامين ادخاري": Joi.number().optional().default(0),
+        "شهر المرتبات": Joi.string().optional()
     }).unknown(true)
 };
 
@@ -134,7 +154,8 @@ export const validateExcelData = (modelType: keyof typeof validationSchemas) => 
             if (!req.file?.path) {
                 return next(new Error("No file uploaded", { cause: 400 }));
             }
-
+            console.log(req.body);
+            
             const filePath = req.file.path;
             const schema = validationSchemas[modelType];
 

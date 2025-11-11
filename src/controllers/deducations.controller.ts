@@ -15,7 +15,7 @@ import parseNumber from "../utils/convertStrNum.js";
 // Add deductions from Excel file
 export const addDeductionsFromFile = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
     const filePath = req.file?.path;
-    const {month} = req.body;
+    const { month, deducationModel } = req.body;
     if (!filePath) {
         return next(new Error("No file uploaded", { cause: 400 }));
     }
@@ -39,16 +39,18 @@ export const addDeductionsFromFile = asyncHandeller(async (req: Request, res: Re
                 console.error(err);
             }
         });
-        return next(new Error(`The following deduction codes do not exist: ${missingCodes.join(', ')}`, { cause: 404 }));
+        // return next(new Error(`The following deduction codes do not exist: ${missingCodes.join(', ')}`, { cause: 404 }));
     }
 
+    // Convert data after validating deduction codes
     let dataAfterConvertPayrole = data.map((doc: ExcelRowData) => {
         return {
             ...doc,
             inempl: parseNumber(doc.inempl),
             insval: parseFloat(doc.insval) || 0,
             month,
-            inlncd: new Types.ObjectId(doc.inlncd) // Convert string to ObjectId
+            deducationModel: deducationModel,
+            inlncd: doc.inlncd // Convert string to ObjectId
         };
     });
 
@@ -61,10 +63,11 @@ export const addDeductionsFromFile = asyncHandeller(async (req: Request, res: Re
     }));
 
     const insertData = await DeducationModel.bulkWrite(ops, { ordered: false });
-
+    console.log(insertData);
+    
     fs.unlink(filePath, (err) => {
         if (err) {
-            console.error(err);
+            console.error(err); 
         }
     });
 
@@ -104,8 +107,7 @@ export const addDeductionCodesFromFile = asyncHandeller(async (req: Request, res
 
     let dataAfterConvertPayrole = data.map((doc: ExcelRowData) => {
         return {
-            ...doc,
-            _id: doc._id, // Keep the provided _id
+            _id: doc.lncod, // Keep the provided _id
             lnnam: doc.lnnam
         };
     });
@@ -270,143 +272,29 @@ export const getAllDeductionsWithFilters = asyncHandeller(async (req: Request, r
     });
 });
 
-// Update a deduction by ID
-export const updateDeduction = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    const { inempl, inlncd, name, insval, deducationModel, month } = req.body;
-
-    if (!Types.ObjectId.isValid(id)) {
-        return next(new Error("Invalid deduction ID", { cause: 400 }));
-    }
-
-    // If inlncd is provided, validate that the deduction code exists
-    if (inlncd) {
-        const deductionCode = await DeducationCodeModel.findById(inlncd);
-        if (!deductionCode) {
-            return next(new Error("Deduction code not found", { cause: 404 }));
-        }
-    }
-
-    const deduction = await DeducationModel.findByIdAndUpdate(
-        id,
-        { inempl, inlncd, name, insval, deducationModel, month },
-        { new: true, runValidators: true }
-    ).populate('inlncd');
-
-    if (!deduction) {
-        return next(new Error("Deduction not found", { cause: 404 }));
-    }
-
-    res.status(200).json({
-        message: "Deduction updated successfully",
-        data: deduction
-    });
-});
-
 // Delete a deduction by ID
 export const deleteDeduction = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
+    const { month, type } = req.body;
 
-    if (!Types.ObjectId.isValid(id)) {
-        return next(new Error("Invalid deduction ID", { cause: 400 }));
-    }
 
-    const deduction = await DeducationModel.findByIdAndDelete(id);
+    const deduction = await DeducationModel.deleteMany({ month: month, deducationModel: type });
 
-    if (!deduction) {
-        return next(new Error("Deduction not found", { cause: 404 }));
+    if (!deduction.deletedCount) {
+        return next(new Error("Deductions not found", { cause: 404 }));
     }
 
     res.status(200).json({
-        message: "Deduction deleted successfully",
+        message: "Deductions deleted successfully",
         data: deduction
-    });
-});
-
-// Create a new deduction
-export const createDeduction = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
-    const { inempl, inlncd, name, insval, deducationModel, month } = req.body;
-
-    // Validate that the deduction code exists
-    const deductionCode = await DeducationCodeModel.findById(inlncd);
-    if (!deductionCode) {
-        return next(new Error("Deduction code not found", { cause: 404 }));
-    }
-
-    // Create the deduction
-    const deduction = new DeducationModel({
-        inempl,
-        inlncd,
-        name,
-        insval,
-        deducationModel,
-        month
-    });
-
-    await deduction.save();
-
-    // Populate the deduction code reference
-    await deduction.populate('inlncd');
-
-    res.status(201).json({
-        message: "Deduction created successfully",
-        data: deduction
-    });
-});
-
-// Create a new deduction code
-export const createDeductionCode = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
-    const { lnnam } = req.body;
-
-    // Generate a unique ID for the deduction code
-    const uniqueId = new Types.ObjectId().toString();
-
-    const deductionCode = new DeducationCodeModel({
-        _id: uniqueId,
-        lnnam
-    });
-
-    await deductionCode.save();
-
-    res.status(201).json({
-        message: "Deduction code created successfully",
-        data: deductionCode
     });
 });
 
 // Get all deduction codes
 export const getAllDeductionCodes = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
-    // Build the base query with filters and search for counting
-    console.log(req.query);
-
-    const baseQuery = new ApiFeatures(DeducationCodeModel.find(), req.query)
-        .search()
-        .filters();
-
-    // Get total count based on filters
-    const totalCount = await DeducationCodeModel.countDocuments(baseQuery.mongooseQuery.getFilter());
-
-    // Build the full query with sorting and pagination
-    const apiFeatures = new ApiFeatures(DeducationCodeModel.find(), req.query)
-        .search()
-        .filters()
-        .sort()
-        .pagination();
-
-    // Execute the query
-    const deductionCodes = await apiFeatures.mongooseQuery;
-
-    // Calculate pagination metadata
-    const size = parseInt(req.query.size as string) || 10;
-    const page = parseInt(req.query.page as string) || 1;
-    const totalPages = Math.ceil(totalCount / size);
+    const deductionCodes = await DeducationCodeModel.find();
 
     res.status(200).json({
         message: "Deduction codes retrieved successfully",
-        data: deductionCodes,
-        totalCount,
-        size,
-        page,
-        totalPages
+        data: deductionCodes
     });
 });
