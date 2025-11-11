@@ -118,7 +118,6 @@ export const validateExcelData = (modelType: keyof typeof validationSchemas) => 
                 fs.unlinkSync(filePath);
                 return next(new Error("Excel file is empty", { cause: 400 }));
             }
-            console.log(data);
 
             // Validate each row using Joi
             const errors: string[] = [];

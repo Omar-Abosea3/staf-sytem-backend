@@ -8,6 +8,7 @@ import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import { ApiFeatures } from "../utils/apiFeatures.js";
 import Notification from "../DB/models/notificationsModel.js";
+import parseNumber from "../utils/convertStrNum.js";
 
 export const addMonthlyPayroll = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
   const filePath = req.file?.path;
@@ -16,8 +17,12 @@ export const addMonthlyPayroll = asyncHandeller(async (req: Request, res: Respon
   const role = systemRoles.STAF;
   let dataAfterEditingDate: ExcelRowData[] = dataDateFormatter(data);
 
+  let dataAfterConvertPayrole = dataAfterEditingDate.map((doc: ExcelRowData) => {
+    return { ...doc, pyempl: parseNumber(doc.pyempl) };
+  });
 
-  const ops = dataAfterEditingDate.map((doc: ExcelRowData) => ({
+
+  const ops = dataAfterConvertPayrole.map((doc: ExcelRowData) => ({
     updateOne: {
       filter: { pyempl: doc.pyempl, "مرتب شهر": doc['مرتب شهر'] },
       update: { $setOnInsert: doc },
@@ -31,16 +36,16 @@ export const addMonthlyPayroll = asyncHandeller(async (req: Request, res: Respon
       console.error(err);
     }
   });
-  
+
 
   if (insertData.upsertedCount === 0) return next(new Error("this data was be added before or it's in invalid format", { cause: 400 }));
   const users = await UserModel.find().select("_id adKey");
   const filterdUser = dataAfterEditingDate.filter((item) => {
     return users.some((user) => user.adKey === item.pyempl);
   });
-  if(filterdUser.length !== 0){
+  if (filterdUser.length !== 0) {
     filterdUser.forEach(async (element) => {
-      await Notification.create({ title: "New Monthly Payroll", message: "There is a new monthly payroll available for you.", userId: element.pyempl, module: "Monthly Payroll"});
+      await Notification.create({ title: "New Monthly Payroll", message: "There is a new monthly payroll available for you.", userId: element.pyempl, module: "Monthly Payroll" });
     });
   }
 
@@ -49,6 +54,9 @@ export const addMonthlyPayroll = asyncHandeller(async (req: Request, res: Respon
 
 export const getStafManMonthlyPayroll = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
+  if(req.user.role === systemRoles.STAF && req.user.adKey !== id){
+      return next(new Error("You are not authorized to access this resource", { cause: 403 }));
+  }
   const statistic = await MonthelyPayrollModel.find({ pyempl: id }).sort({ "مرتب شهر": -1 });
   console.log(statistic);
   const foundedUserName = await HalfMonthBonusModel.findOne({ "الرقم الوظيفي": id });
@@ -62,8 +70,19 @@ export const getStafManMonthlyPayroll = asyncHandeller(async (req: Request, res:
   return res.status(200).json({ message: "success", data: returnedData });
 });
 
+
 export const getAllMonthlyPayrollsForAdmin = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
-  // Build the query using ApiFeatures for filtering, sorting, searching, and pagination
+  // Build the base query with filters and search for counting
+  console.log(req.query);
+  
+  const baseQuery = new ApiFeatures(MonthelyPayrollModel.find(), req.query)
+    .search()
+    .filters();
+
+  // Get total count based on filters
+  const totalCount = await MonthelyPayrollModel.countDocuments(baseQuery.mongooseQuery.getFilter());
+
+  // Build the full query with sorting and pagination
   const apiFeatures = new ApiFeatures(MonthelyPayrollModel.find(), req.query)
     .search()
     .filters()
@@ -73,25 +92,28 @@ export const getAllMonthlyPayrollsForAdmin = asyncHandeller(async (req: Request,
   // Execute the query
   const payrolls = await apiFeatures.mongooseQuery;
 
-  // Get total count for pagination metadata
-  const totalCount = await MonthelyPayrollModel.countDocuments();
+  // Calculate pagination metadata
+  const size = parseInt(req.query.size as string) || 10;
+  const page = parseInt(req.query.page as string) || 1;
+  const totalPages = Math.ceil(totalCount / size);
 
   // Enrich data with employee names from HalfMonthBonusModel
-  const enrichedPayrolls = await Promise.all(
-    payrolls.map(async (payroll: any) => {
-      const employeeInfo = await HalfMonthBonusModel.findOne({ "الرقم الوظيفي": payroll.pyempl });
-      return {
-        ...payroll._doc,
-        employeeName: employeeInfo ? employeeInfo["الاسم"] : undefined
-      };
-    })
-  );
+  // const enrichedPayrolls = await Promise.all(
+  //   payrolls.map(async (payroll: any) => {
+  //     const employeeInfo = await HalfMonthBonusModel.findOne({ "الرقم الوظيفي": payroll.pyempl });
+  //     return {
+  //       ...payroll._doc,
+  //       employeeName: employeeInfo ? employeeInfo["الاسم"] : undefined
+  //     };
+  //   })
+  // );
 
   return res.status(200).json({
     message: "success",
-    data: enrichedPayrolls,
+    data: payrolls,
     totalCount,
-    page: req.query.page || 1,
-    size: req.query.size || enrichedPayrolls.length
+    size,
+    page,
+    totalPages
   });
 });

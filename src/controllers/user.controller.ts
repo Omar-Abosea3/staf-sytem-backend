@@ -30,16 +30,20 @@ export const login = asyncHandeller(
     //   await newUser.save();
     //   return res.status(200).json({ message: "success", data: { userName: newUser.userName, adKey }, token });
     // }
+    const comparedPassword = compareSync(password, foundedDBUser.password);
+    if (!comparedPassword) return next(new Error("incorrect password", { cause: 400 })); 
     const token: string = createToken(foundedDBUser._id.toString(), foundedDBUser.userName);
     foundedDBUser.tokens = [...foundedDBUser.tokens, token];
     await foundedDBUser.save();
-    return res.status(200).json({ message: "success", data: { userName: foundedDBUser.userName, adKey: foundedDBUser.adKey }, token });
+    return res.status(200).json({ message: "success", data: { userName: foundedDBUser.userName, adKey: foundedDBUser.adKey , role:foundedDBUser.role }, token });
   }
 ); 
 
 export const logout = asyncHandeller(
   async (req: Request, res: Response, next: NextFunction) => {
     const { user } = req;
+    console.log(user);
+    
     user.tokens = user.tokens.filter((token: string) => token !== req.token);
     await user.save();
     return res.status(200).json({ message: "user logged out successfully" });
@@ -91,7 +95,7 @@ export const getDashboardStates = asyncHandeller(async (req: Request, res: Respo
       }
     ]);
 
-    res.json({
+    return res.json({
       totalEmployees: uniqueEmployees.length,
       totalPayroll,
       // totalDeductions,

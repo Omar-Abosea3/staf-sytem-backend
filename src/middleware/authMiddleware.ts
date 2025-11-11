@@ -15,11 +15,13 @@ export const isAuthenticated = (roles: string[]) => {
       const token = authorization;
 
       const decoded: Payload = verifyToken(token, next);
+  
       if (!decoded) {
         return next(new Error("انتهت صلاحية الجلسة", { cause: 401 }));
       }
       const user = await UserModel.findOne({ _id: decoded.id, tokens: { $in: [token] } });
       if (!user) return next(new Error("No user found", { cause: 404 }));
+      if(!roles.includes(user.role)) return next(new Error("You are not authorized to access this resource", { cause: 403 }));
       req.token = token;
       req.user = user;
       next();

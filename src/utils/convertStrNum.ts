@@ -1,6 +1,7 @@
+
 function parseNumber(str: string): string {
-    console.log(str);
-    
+  console.log(str);
+
   // Match the numeric part at the end of the string
   const match = str.match(/(\d+)$/);
 
@@ -11,9 +12,22 @@ function parseNumber(str: string): string {
 
   let numberPart = match[1];
 
-  // Remove leading zeros if the number is longer than 3 digits
+  // Keep at least 3 digits by removing leading zeros only if length > 3
+  // This ensures: 00222->222, 00022->022, 00002->002, 02222->2222, 22222->22222
   if (numberPart.length > 3) {
-    numberPart = numberPart.replace(/^0+/, '');
+    // Remove leading zeros but keep at least 3 digits
+    const zerosToRemove = numberPart.length - 3;
+    let leadingZeros = 0;
+
+    for (let i = 0; i < zerosToRemove; i++) {
+      if (numberPart[i] === '0') {
+        leadingZeros++;
+      } else {
+        break;
+      }
+    }
+
+    numberPart = numberPart.substring(leadingZeros);
   }
 
   return numberPart;

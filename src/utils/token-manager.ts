@@ -13,6 +13,7 @@ export const createToken = (id:string , userName:string , expiresIn:string = "1d
 
 export const verifyToken = (token: string , next?:NextFunction) => {
     try {
+        token
         return jwt.verify(token, process.env.JWT_SECRET) as Payload;
     } catch (error) {
         return next(new Error("this token is expired", { cause: 401 }));

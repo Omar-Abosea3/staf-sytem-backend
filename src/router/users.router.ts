@@ -8,5 +8,6 @@ const usersRouter = Router();
 usersRouter
 .post('/login' , login)
 .patch('/logout' , isAuthenticated([systemRoles.ADMIN , systemRoles.STAF]) , logout)
-.get('/dashboard-stats' , getDashboardStates);
-export default usersRouter; 
+.get('/profile' , isAuthenticated([systemRoles.ADMIN]) , getDashboardStates)
+.get('/dashboard-stats' , isAuthenticated([systemRoles.ADMIN]) , getDashboardStates);
+export default usersRouter;  

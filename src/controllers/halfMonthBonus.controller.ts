@@ -2,11 +2,13 @@
 import HalfMonthBonusModel from "../DB/models/halfMounthBonus.model.js";
 import UserModel from "../DB/models/usersModel.js";
 import { asyncHandeller } from "../utils/errorHandlig.js";
-import sheetHandeler, { dataDateFormatter } from "../utils/sheetHandler.js";
+import sheetHandeler, { dataDateFormatter, ExcelRowData } from "../utils/sheetHandler.js";
 import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import { ApiFeatures } from "../utils/apiFeatures.js";
 import Notification from "../DB/models/notificationsModel.js";
+import parseNumber from "../utils/convertStrNum.js";
+import { systemRoles } from "../utils/systemRoles.js";
 
 export const addHalfMonthBonus = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
   const filePath = req.file?.path;
@@ -19,11 +21,13 @@ export const addHalfMonthBonus = asyncHandeller(async (req: Request, res: Respon
     const formattedDate = `${year}-${month}`;
     return { ...doc, month: formattedDate };
   });
-  console.log(dataAfterAddingDate);
+  let dataAfterConvertPayrole = dataAfterAddingDate.map((doc: ExcelRowData) => {
+    return { ...doc, "الرقم الوظيفي": parseNumber(doc["الرقم الوظيفي"]) };
+  });
 
-  const ops = dataAfterAddingDate.map(doc => ({
+  const ops = dataAfterConvertPayrole.map(doc => ({
     updateOne: {
-      filter: { "الرقم الوظيفي": doc["الرقم الوظيفي"], "month": doc.month },
+      filter: { "الرقم الوظيفي": doc["الرقم الوظيفي"], "month": doc["month"] },
       update: { $setOnInsert: doc },
       upsert: true
     }
@@ -36,26 +40,29 @@ export const addHalfMonthBonus = asyncHandeller(async (req: Request, res: Respon
     }
   });
   if (insertData.upsertedCount === 0) return next(new Error("this data was be added before or it's in invalid format", { cause: 400 }));
-    if (insertData.upsertedCount === 0) return next(new Error("this data was be added before or it's in invalid format", { cause: 400 }));
-    const users = await UserModel.find().select("_id adKey");
-    const filterdUser = dataAfterAddingDate.filter((item) => {
-      return users.some((user) => user.adKey === item["الرقم الوظيفي"]);
+  if (insertData.upsertedCount === 0) return next(new Error("this data was be added before or it's in invalid format", { cause: 400 }));
+  const users = await UserModel.find().select("_id adKey");
+  const filterdUser = dataAfterAddingDate.filter((item) => {
+    return users.some((user) => user.adKey === item["الرقم الوظيفي"]);
+  });
+  if (filterdUser.length !== 0) {
+    filterdUser.forEach(async (element) => {
+      await Notification.create({ title: "New Half Month Bonus", message: "There is a new half month bonus available for you.", userId: element["الرقم الوظيفي"], module: "Half Month Bonus" });
     });
-    if(filterdUser.length !== 0){
-      filterdUser.forEach(async (element) => {
-        await Notification.create({ title: "New Half Month Bonus", message: "There is a new half month bonus available for you.", userId: element["الرقم الوظيفي"], module: "Half Month Bonus"});
-      });
-    }
+  }
   return res.status(200).json({ message: "half month bonus added successfully", data: insertData });
 });
 
 export const getStafManHalfMonthBonus = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
-  const {month} = req.query;
+  const { month } = req.query;
+  if(req.user.role === systemRoles.STAF && req.user.adKey !== id){
+    return next(new Error("You are not authorized to access this resource", { cause: 403 }));
+  }
   const queryData: any = {
     "الرقم الوظيفي": id,
   }
-  if(month){
+  if (month) {
     queryData.month = month;
   }
 
@@ -69,7 +76,17 @@ export const getStafManHalfMonthBonus = asyncHandeller(async (req: Request, res:
 });
 
 export const getAllHalfMonthBonusWithFilters = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
-  // Build the query using ApiFeatures for filtering, sorting, searching, and pagination
+  // Build the base query with filters and search for counting
+  console.log(req.query);
+
+  const baseQuery = new ApiFeatures(HalfMonthBonusModel.find(), req.query)
+    .search()
+    .filters();
+
+  // Get total count based on filters
+  const totalCount = await HalfMonthBonusModel.countDocuments(baseQuery.mongooseQuery.getFilter());
+
+  // Build the full query with sorting and pagination
   const apiFeatures = new ApiFeatures(HalfMonthBonusModel.find(), req.query)
     .search()
     .filters()
@@ -79,14 +96,17 @@ export const getAllHalfMonthBonusWithFilters = asyncHandeller(async (req: Reques
   // Execute the query
   const bonuses = await apiFeatures.mongooseQuery;
 
-  // Get total count for pagination metadata
-  const totalCount = await HalfMonthBonusModel.countDocuments();
+  // Calculate pagination metadata
+  const size = parseInt(req.query.size as string) || 10;
+  const page = parseInt(req.query.page as string) || 1;
+  const totalPages = Math.ceil(totalCount / size);
 
   return res.status(200).json({
     message: "success",
     data: bonuses,
     totalCount,
-    page: req.query.page || 1,
-    size: req.query.size || bonuses.length
+    size,
+    page,
+    totalPages
   });
 });

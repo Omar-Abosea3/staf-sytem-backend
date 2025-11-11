@@ -7,6 +7,7 @@ interface QueryData {
   size?: number;
   searchKey?: string;
   sort?: string;
+  searchFields?: string[]; // Add this to specify which fields to search
   [key: string]: any; // Allow other properties for filters
 }
 
@@ -35,20 +36,17 @@ export class ApiFeatures<T extends Document> {
   }
 
   // Search method to filter by multiple fields
-  search(): this {
-    const { searchKey } = this.queryData;
-    if (searchKey) {
-      const search = {
-        $or: [
-          { name: { $regex: searchKey, $options: 'i' } },
-          { CDM: { $regex: searchKey, $options: 'i' } },
-          { pyempl: { $regex: searchKey, $options: 'i' } },
-          { 'الادارة': { $regex: searchKey, $options: 'i' } },
-          { 'البند': { $regex: searchKey, $options: 'i' } },
-          { 'الرقم الوظيفي': { $regex: searchKey, $options: 'i' } },
-          { 'الاسم': { $regex: searchKey, $options: 'i' } }
-        ],
-      };
+  search(): this { 
+    const { searchKey, searchFields } = this.queryData;
+    console.log(searchFields);
+    
+    if (searchKey && searchFields && searchFields.length > 0) {
+      // Dynamically build the $or condition based on provided searchFields
+      const searchConditions = searchFields.map(field => ({
+        [field]: { $regex: searchKey, $options: 'i' }
+      }));
+
+      const search = { $or: searchConditions };
       this.mongooseQuery.find(search);
     }
     return this;
@@ -66,11 +64,11 @@ export class ApiFeatures<T extends Document> {
   // Filtering method
   filters(): this {
     const queryInstance = { ...this.queryData };
-    const excludedKeys = ['sort', 'select', 'searchKey', 'size', 'page'];
+    const excludedKeys = ['sort', 'select', 'searchKey', 'searchFields', 'size', 'page'];
     excludedKeys.forEach((key) => delete queryInstance[key]);
 
     // Transform filter keys to Mongoose format (e.g., gt -> $gt)
-    const filters = JSON.parse( 
+    const filters = JSON.parse(
       JSON.stringify(queryInstance).replace(
         /\b(gt|gte|lt|lte|eq|in|nin|neq|regex)\b/g,
         (match) => `$${match}`
