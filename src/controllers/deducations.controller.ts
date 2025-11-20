@@ -79,16 +79,16 @@ export const addDeductionsFromFile = asyncHandeller(async (req: Request, res: Re
         return users.some((user) => user.adKey === item.inempl);
     });
 
-    if (filterdUser.length !== 0) {
-        filterdUser.forEach(async (element) => {
-            await Notification.create({
-                title: "New Deduction",
-                message: "There is a new deduction added for you.",
-                userId: element.inempl,
-                module: "Deduction"
-            });
-        });
-    }
+    // if (filterdUser.length !== 0) {
+    //     filterdUser.forEach(async (element) => {
+    //         await Notification.create({
+    //             title: "New Deduction",
+    //             message: "There is a new deduction added for you.",
+    //             userId: element.inempl,
+    //             module: "Deduction"
+    //         });
+    //     });
+    // }
 
     return res.status(200).json({ message: "deductions added successfully", data: insertData });
 });

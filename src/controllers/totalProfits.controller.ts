@@ -12,7 +12,7 @@ import TotalProfitsModel from "../DB/models/totalProfits.model.js";
 
 export const addTotalProfits = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
     const filePath = req.file?.path;
-
+    const {year} = req.body;
     if (!filePath) {
         return next(new Error("No file uploaded", { cause: 400 }));
     }
@@ -20,12 +20,13 @@ export const addTotalProfits = asyncHandeller(async (req: Request, res: Response
     console.log(filePath);
 
     const data = sheetHandeler(filePath!);
-
+    const date = new Date(year);
     let dataAfterConvertPayrole = data.map((doc: ExcelRowData) => {
         return {
             ...doc,
             "رقم العامل": parseNumber(doc["رقم العامل"]),
-            "القروض": parseFloat(doc["القروض"]) || 0,
+            "اسم العامل": doc["اسم العامل"],
+            "القروض": parseFloat(doc["القروض"]) || 0, 
             loan1: parseFloat(doc["loan1"]) || 0,
             loan2: parseFloat(doc["loan2"]) || 0,
             "قرض الإسكان": parseFloat(doc["قرض الإسكان"]) || 0,
@@ -35,13 +36,14 @@ export const addTotalProfits = asyncHandeller(async (req: Request, res: Response
             "م نهايه خدمه": parseFloat(doc["م نهايه خدمه"]) || 0,
             "مبلغ المكافأة": parseFloat(doc["مبلغ المكافأة"]) || 0,
             "صافي مكافاة": parseFloat(doc["صافي مكافاة"]) || 0,
-            "تامين ادخاري": parseFloat(doc["تامين ادخاري"]) || 0
+            "تامين ادخاري": parseFloat(doc["تامين ادخاري"]) || 0,
+            "العام": date.getFullYear()
         };
     });
 
     const ops = dataAfterConvertPayrole.map(doc => ({
         updateOne: {
-            filter: { "رقم العامل": doc["رقم العامل"], "شهر المرتبات": doc["شهر المرتبات"] },
+            filter: { "رقم العامل": doc["رقم العامل"] , "العام": date.getFullYear() },
             update: { $setOnInsert: doc },
             upsert: true
         }
@@ -63,39 +65,41 @@ export const addTotalProfits = asyncHandeller(async (req: Request, res: Response
         return users.some((user) => user.adKey === item["رقم العامل"]);
     });
 
-    if (filterdUser.length !== 0) {
-        filterdUser.forEach(async (element) => {
-            await Notification.create({
-                title: "New Total Profits",
-                message: "There is a new total profits record available for you.",
-                userId: element["رقم العامل"],
-                module: "Total Profits"
-            });
-        });
-    }
+    // if (filterdUser.length !== 0) {
+    //     filterdUser.forEach(async (element) => {
+    //         await Notification.create({
+    //             title: "New Total Profits",
+    //             message: "There is a new total profits record available for you.",
+    //             userId: element["رقم العامل"],
+    //             module: "Total Profits"
+    //         });
+    //     });
+    // }
 
     return res.status(200).json({ message: "total profits added successfully", data: insertData });
 });
 
 export const getStafManTotalProfits = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-
+    console.log(id);
+    
     if (req.user.role === systemRoles.STAF && req.user.adKey !== id) {
         return next(new Error("You are not authorized to access this resource", { cause: 403 }));
     }
 
     const queryData: any = {
-        "رقم العامل": id,
+        _id: id,
     }
 
 
-    const statistic = await TotalProfitsModel.find(queryData).sort({ "createdAt": -1 });
+    const statistic = await TotalProfitsModel.findOne(queryData);
     console.log(statistic);
 
     if (!statistic) {
         return next(new Error("Failed to get statistic", { cause: 500 }));
     }
-
+    console.log(statistic , "statistic");
+    
     return res.status(200).json({ message: "success", data: statistic });
 });
 
@@ -133,4 +137,15 @@ export const getAllTotalProfitsWithFilters = asyncHandeller(async (req: Request,
         page,
         totalPages
     });
+});
+
+export const deleteByYear = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
+  const { year:userYear } = req.body;
+  const date = new Date(userYear);
+  const year = date.getFullYear();
+  const formattedDate = `${year}`;
+  
+  const deletedData = await TotalProfitsModel.deleteMany({ "العام": formattedDate });
+  if(deletedData.deletedCount === 0) return next(new Error("you don't have any data for this year to delete", { cause: 404 }));
+  return res.status(200).json({ message: "success" });
 });

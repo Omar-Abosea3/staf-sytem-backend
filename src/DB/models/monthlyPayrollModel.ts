@@ -51,6 +51,8 @@ const monthelyPayrollSchema = new Schema(
     "الصافي": { type: Number, default: 0 },
     pydep: { type: String },
     "الادارة": { type: String },
+    "تسويات": { type: Number, default: 0 },
+    "بدل الطريق": { type: Number, default: 0 },
   },
   { timestamps: true }
 );

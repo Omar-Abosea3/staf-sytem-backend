@@ -12,10 +12,11 @@ import { systemRoles } from "../utils/systemRoles.js";
 
 export const addHalfMonthBonus = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
   const filePath = req.file?.path;
+  const {month:userMonth} = req.body;
   console.log(filePath);
   const data = sheetHandeler(filePath!);
   let dataAfterAddingDate: any[] = data.map((doc: any) => {
-    const date = new Date();
+    const date = userMonth ? new Date(userMonth) : new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const formattedDate = `${year}-${month}`;
@@ -109,4 +110,19 @@ export const getAllHalfMonthBonusWithFilters = asyncHandeller(async (req: Reques
     page,
     totalPages
   });
+});
+
+export const deleteDataByMonth = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
+  const { month } = req.body;
+  const date = new Date(month);
+  const year = date.getFullYear();
+  const convertedMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const formattedDate = `${year}-${convertedMonth}`;
+  console.log(formattedDate);
+  const data = await HalfMonthBonusModel.find({ month: formattedDate });
+  
+  const deletedData = await HalfMonthBonusModel.deleteMany({ month: formattedDate });
+
+  if(deletedData.deletedCount === 0) return next(new Error("you don't have any data for this year and month to delete", { cause: 404 }));
+  return res.status(200).json({ message: "success" });
 });

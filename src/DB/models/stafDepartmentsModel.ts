@@ -9,20 +9,17 @@ const departmentSchema = new Schema({
   msempl: {
     type: String,
     required: true,
-    unique: true,
     trim: true
   },
   msname: {
     type: String,
     required: true,
-    trim: true,
-    unique: true
+    trim: true
   },
   msnama: {
     type: String,
     required: true,
     trim: true,
-    unique: true
   }
 }, { timestamps: true });
 

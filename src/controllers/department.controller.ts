@@ -4,21 +4,30 @@ import sheetHandeler, { ExcelRowData } from "../utils/sheetHandler.js";
 import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import { ApiFeatures } from "../utils/apiFeatures.js";
+import parseNumber from "../utils/convertStrNum.js";
 
 export const addDepartments = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
     const filePath = req.file?.path;
     console.log(filePath);
     const data: ExcelRowData[] = sheetHandeler(filePath!);
-    const ops = data.map((doc: ExcelRowData) => ({
+    const dataAfterEditPayroll = data.map((doc: ExcelRowData) => {
+        return {
+            ...doc,
+            msempl: parseNumber(doc.msempl),
+        }
+    });
+    const ops = dataAfterEditPayroll.map((doc: ExcelRowData) => ({
         updateOne: {
             filter: {
-                pyempl: doc.pyempl
+                msempl: doc.msempl,
+                department: doc.department
             },
             update: { $setOnInsert: doc },
             upsert: true
         }
     }));
-
+    console.log(ops);
+    
     const insertData = await DepartmentModel.bulkWrite(ops, { ordered: false });
     fs.unlink(filePath, (err) => {
         if (err) {

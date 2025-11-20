@@ -20,12 +20,21 @@ const validationSchemas = {
     }).unknown(true), // Allow other fields from Excel
 
     department: Joi.object({
-        pyempl: Joi.string().required().trim().messages({
+        msempl: Joi.string().required().trim().messages({
             'string.base': 'pyempl must be a string',
             'string.empty': 'pyempl cannot be empty',
             'any.required': 'pyempl is required'
         }),
-        'الادارة': Joi.string().required().trim().messages({
+        department: Joi.string().optional().trim().messages({
+            'string.base': 'الادارة must be a string',
+            'string.empty': 'الادارة cannot be empty'
+        }),
+         msname: Joi.string().required().trim().messages({
+            'string.base': 'pyempl must be a string',
+            'string.empty': 'pyempl cannot be empty',
+            'any.required': 'pyempl is required'
+        }),
+        msnama: Joi.string().required().trim().messages({
             'string.base': 'الادارة must be a string',
             'string.empty': 'الادارة cannot be empty',
             'any.required': 'الادارة is required'
@@ -96,11 +105,10 @@ const validationSchemas = {
             'string.empty': 'name cannot be empty',
             'any.required': 'name is required'
         }),
-        insval: Joi.number().optional().default(0),
+        insval: Joi.string().optional(),
         deducationModel: Joi.string().optional().messages({
             'string.base': 'deducationModel must be a string',
-            'string.empty': 'deducationModel cannot be empty',
-            'any.required': 'deducationModel is required'
+            'string.empty': 'deducationModel cannot be empty'
         }),
     }).unknown(true),
 
@@ -205,6 +213,7 @@ export const validateExcelData = (modelType: keyof typeof validationSchemas) => 
 
             // If there are validation errors, delete file and return errors
             if (errors.length > 0) {
+                console.log(errors);
                 fs.unlinkSync(filePath);
                 return res.status(400).json({
                     message: "Excel validation failed",
