@@ -105,7 +105,7 @@ const validationSchemas = {
             'string.empty': 'name cannot be empty',
             'any.required': 'name is required'
         }),
-        insval: Joi.string().optional(),
+        insval: Joi.number().optional(),
         deducationModel: Joi.string().optional().messages({
             'string.base': 'deducationModel must be a string',
             'string.empty': 'deducationModel cannot be empty'

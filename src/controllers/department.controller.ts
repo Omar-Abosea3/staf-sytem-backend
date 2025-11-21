@@ -27,7 +27,7 @@ export const addDepartments = asyncHandeller(async (req: Request, res: Response,
         }
     }));
     console.log(ops);
-    
+
     const insertData = await DepartmentModel.bulkWrite(ops, { ordered: false });
     fs.unlink(filePath, (err) => {
         if (err) {
@@ -47,7 +47,17 @@ export const getAllDepartments = asyncHandeller(async (req: Request, res: Respon
 });
 
 export const getAllDepartmentsWithFilters = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
-    // Build the query using ApiFeatures for filtering, sorting, searching, and pagination
+    // Build the base query with filters and search for counting
+    console.log(req.query);
+
+    const baseQuery = new ApiFeatures(DepartmentModel.find(), req.query)
+        .search()
+        .filters();
+
+    // Get total count based on filters
+    const totalCount = await DepartmentModel.countDocuments(baseQuery.mongooseQuery.getFilter());
+
+    // Build the full query with sorting and pagination
     const apiFeatures = new ApiFeatures(DepartmentModel.find(), req.query)
         .search()
         .filters()
@@ -57,14 +67,17 @@ export const getAllDepartmentsWithFilters = asyncHandeller(async (req: Request, 
     // Execute the query
     const departments = await apiFeatures.mongooseQuery;
 
-    // Get total count for pagination metadata
-    const totalCount = await DepartmentModel.countDocuments();
+    // Calculate pagination metadata
+    const size = parseInt(req.query.size as string) || 10;
+    const page = parseInt(req.query.page as string) || 1;
+    const totalPages = Math.ceil(totalCount / size);
 
     return res.status(200).json({
         message: "success",
         data: departments,
         totalCount,
-        page: req.query.page || 1,
-        size: req.query.size || departments.length
+        size,
+        page,
+        totalPages
     });
 });

@@ -3,7 +3,7 @@ import { deducationTypes } from "../../utils/deducationType.js";
 
 const deductionsSchema = new Schema({
     inempl: { type: String, required: true },
-    inlncd: { type: Types.ObjectId, ref: "DeducationCode", required: true },
+    inlncd: { type: String, ref: "DeducationCode", required: true },
     name: { type: String, required: true },
     insval: { type: String },
     deducationModel: { type: String, required: true, enum: [...deducationTypes.month, ...deducationTypes.halfMonth, deducationTypes.year] },

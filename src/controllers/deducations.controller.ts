@@ -47,21 +47,23 @@ export const addDeductionsFromFile = asyncHandeller(async (req: Request, res: Re
         return {
             ...doc,
             inempl: parseNumber(doc.inempl),
-            insval: parseFloat(doc.insval) || 0,
+            insval: String(doc.insval) || 0,
             month,
             deducationModel: deducationModel,
             inlncd: doc.inlncd // Convert string to ObjectId
         };
     });
-
+    console.log(dataAfterConvertPayrole);
+    
     const ops = dataAfterConvertPayrole.map((doc: any) => ({
         updateOne: {
-            filter: { inempl: doc.inempl, month: doc.month, name: doc.name, inlncd: doc.inlncd },
+            filter: { inempl: doc.inempl, month: doc.month, inlncd: doc.inlncd , deducationModel:doc.deducationModel },
             update: { $setOnInsert: doc },
             upsert: true
         }
     }));
-
+    console.log(ops);
+    
     const insertData = await DeducationModel.bulkWrite(ops, { ordered: false });
     console.log(insertData);
     
