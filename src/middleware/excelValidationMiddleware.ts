@@ -77,13 +77,13 @@ const validationSchemas = {
             'number.base': 'code must be a number',
             'any.required': 'code is required'
         }),
-        pyempl: Joi.string().required().trim().messages({
-            'string.base': 'pyempl must be a string',
-            'string.empty': 'pyempl cannot be empty',
-            'any.required': 'pyempl is required'
+        pyrole: Joi.string().required().trim().messages({
+            'string.base': 'pyrole must be a string',
+            'string.empty': 'pyrole cannot be empty',
+            'any.required': 'pyrole is required'
         }),
-        net: Joi.string().required().messages({
-            'string.base': 'net must be a string',
+        net: Joi.number().required().messages({
+            'number.base': 'net must be a number',
             'any.required': 'net is required'
         }),
         month: Joi.string().optional()

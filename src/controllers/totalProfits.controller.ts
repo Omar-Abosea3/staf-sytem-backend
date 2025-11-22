@@ -9,6 +9,9 @@ import Notification from "../DB/models/notificationsModel.js";
 import parseNumber from "../utils/convertStrNum.js";
 import { systemRoles } from "../utils/systemRoles.js";
 import TotalProfitsModel from "../DB/models/totalProfits.model.js";
+import DepartmentModel from "../DB/models/stafDepartmentsModel.js";
+import DeducationModel from "../DB/models/deducationsModel.js";
+import { deducationTypes } from "../utils/deducationType.js";
 
 export const addTotalProfits = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
     const filePath = req.file?.path;
@@ -81,27 +84,48 @@ export const addTotalProfits = asyncHandeller(async (req: Request, res: Response
 
 export const getStafManTotalProfits = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
+    const {profile} = req.query;
     console.log(id);
     
     if (req.user.role === systemRoles.STAF && req.user.adKey !== id) {
         return next(new Error("You are not authorized to access this resource", { cause: 403 }));
     }
+      const profileFounded = profile === undefined || profile === "false" || profile === "undefined" ? false : true;
+     let queryData: any = {};
+  if(req.user.role === systemRoles.ADMIN && !profileFounded){
+    queryData._id = id;
+  }else{
+    queryData["رقم العامل"] = id;
+  }
 
-    const queryData: any = {
-        _id: id,
-    }
 
-
-    const statistic = await TotalProfitsModel.findOne(queryData);
+    const statistic = await TotalProfitsModel.find(queryData);
     console.log(statistic);
 
     if (!statistic) {
         return next(new Error("Failed to get statistic", { cause: 500 }));
     }
-    console.log(statistic , "statistic");
+    const departmentUserId = req.user.role === systemRoles.ADMIN ? statistic[0]["رقم العامل"] : id;
+    const foundedUserName = await DepartmentModel.findOne({ msempl: departmentUserId });
+  const returnedData = await Promise.all(statistic.map(async (doc: any) => {
+      console.log(doc);
+      const foundDeducations = await DeducationModel.find({
+        inempl: doc["رقم العامل"],
+        month: doc["العام"],
+        deducationModel: deducationTypes.year
+      });
+      return {
+        ...doc.toObject(),
+        userName: foundedUserName ? foundedUserName.msname : undefined,
+        department: foundedUserName ? foundedUserName.department : undefined,
+        deducations: foundDeducations
+      };
+    }));
     
-    return res.status(200).json({ message: "success", data: statistic });
+    return res.status(200).json({ message: "success", data: returnedData });
 });
+
+
 
 export const getAllTotalProfitsWithFilters = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
     // Build the base query with filters and search for counting

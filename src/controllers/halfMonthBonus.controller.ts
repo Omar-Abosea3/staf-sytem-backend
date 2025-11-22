@@ -9,10 +9,13 @@ import { ApiFeatures } from "../utils/apiFeatures.js";
 import Notification from "../DB/models/notificationsModel.js";
 import parseNumber from "../utils/convertStrNum.js";
 import { systemRoles } from "../utils/systemRoles.js";
+import DepartmentModel from "../DB/models/stafDepartmentsModel.js";
+import DeducationModel from "../DB/models/deducationsModel.js";
+import { deducationTypes } from "../utils/deducationType.js";
 
 export const addHalfMonthBonus = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
   const filePath = req.file?.path;
-  const {month:userMonth} = req.body;
+  const { month: userMonth } = req.body;
   console.log(filePath);
   const data = sheetHandeler(filePath!);
   let dataAfterAddingDate: any[] = data.map((doc: any) => {
@@ -56,13 +59,18 @@ export const addHalfMonthBonus = asyncHandeller(async (req: Request, res: Respon
 
 export const getStafManHalfMonthBonus = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
-  const { month } = req.query;
-  if(req.user.role === systemRoles.STAF && req.user.adKey !== id){
+  const { month , profile } = req.query;
+  if (req.user.role === systemRoles.STAF && req.user.adKey !== id) {
     return next(new Error("You are not authorized to access this resource", { cause: 403 }));
   }
-  const queryData: any = {
-    "الرقم الوظيفي": id,
+    const profileFounded = profile === undefined || profile === "false" || profile === "undefined" ? false : true;
+  let queryData: any = {};
+  if (req.user.role === systemRoles.ADMIN && !profileFounded) {
+    queryData._id = id;
+  } else {
+    queryData["الرقم الوظيفي"] = id;
   }
+
   if (month) {
     queryData.month = month;
   }
@@ -73,7 +81,23 @@ export const getStafManHalfMonthBonus = asyncHandeller(async (req: Request, res:
   if (!statistic) {
     return next(new Error("Failed to get statistic", { cause: 500 }));
   }
-  return res.status(200).json({ message: "success", data: statistic });
+    const departmentUserId = req.user.role === systemRoles.ADMIN ? statistic[0]["الرقم الوظيفي"] : id;
+    const foundedUserName = await DepartmentModel.findOne({ msempl: departmentUserId });
+  const returnedData = await Promise.all(statistic.map(async (doc: any) => {
+      console.log(doc);
+      const foundDeducations = await DeducationModel.find({
+        inempl: doc["الرقم الوظيفي"],
+        month: doc.month,
+        deducationModel: deducationTypes.halfMonth
+      });
+      return {
+        ...doc.toObject(),
+        userName: foundedUserName ? foundedUserName.msname : undefined,
+        department: foundedUserName ? foundedUserName.department : undefined,
+        deducations: foundDeducations
+      };
+    }));
+  return res.status(200).json({ message: "success", data: returnedData });
 });
 
 export const getAllHalfMonthBonusWithFilters = asyncHandeller(async (req: Request, res: Response, next: NextFunction) => {
@@ -120,9 +144,9 @@ export const deleteDataByMonth = asyncHandeller(async (req: Request, res: Respon
   const formattedDate = `${year}-${convertedMonth}`;
   console.log(formattedDate);
   const data = await HalfMonthBonusModel.find({ month: formattedDate });
-  
+
   const deletedData = await HalfMonthBonusModel.deleteMany({ month: formattedDate });
 
-  if(deletedData.deletedCount === 0) return next(new Error("you don't have any data for this year and month to delete", { cause: 404 }));
+  if (deletedData.deletedCount === 0) return next(new Error("you don't have any data for this year and month to delete", { cause: 404 }));
   return res.status(200).json({ message: "success" });
 });

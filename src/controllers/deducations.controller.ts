@@ -31,7 +31,7 @@ export const addDeductionsFromFile = asyncHandeller(async (req: Request, res: Re
     });
 
     const existingCodeIds = new Set(existingCodes.map(code => code._id.toString()));
-    const missingCodes = deductionCodeIds.filter(id => !existingCodeIds.has(id));
+    const missingCodes = deductionCodeIds.filter((id: string) => !existingCodeIds.has(id));
 
     if (missingCodes.length > 0) {
         fs.unlink(filePath, (err) => {
@@ -39,7 +39,7 @@ export const addDeductionsFromFile = asyncHandeller(async (req: Request, res: Re
                 console.error(err);
             }
         });
-        // return next(new Error(`The following deduction codes do not exist: ${missingCodes.join(', ')}`, { cause: 404 }));
+        return next(new Error(`The following deduction codes do not exist: ${missingCodes.join(', ')}`, { cause: 404 }));
     }
 
     // Convert data after validating deduction codes
