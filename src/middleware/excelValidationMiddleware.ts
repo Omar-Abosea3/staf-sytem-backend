@@ -100,7 +100,7 @@ const validationSchemas = {
             'string.empty': 'inlncd cannot be empty',
             'any.required': 'inlncd is required'
         }),
-        name: Joi.string().required().trim().messages({
+        name: Joi.string().optional().trim().messages({
             'string.base': 'name must be a string',
             'string.empty': 'name cannot be empty',
             'any.required': 'name is required'

@@ -87,7 +87,11 @@ export const getStafManMonthlyPayroll = asyncHandeller(async (req: Request, res:
       inempl: doc.pyempl,
       month: doc['مرتب شهر'],
       deducationModel: deducationTypes.month
-    });
+    }).populate([
+      {
+        path:'inlncd'
+      }
+    ]);
     console.log( doc.pyempl , doc['مرتب شهر']);
     
     const foundedAllownces = await EmployeeAllowancesModel.find({

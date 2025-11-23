@@ -91,7 +91,9 @@ export const getStafManTotalProfits = asyncHandeller(async (req: Request, res: R
         return next(new Error("You are not authorized to access this resource", { cause: 403 }));
     }
       const profileFounded = profile === undefined || profile === "false" || profile === "undefined" ? false : true;
-     let queryData: any = {};
+     console.log(profileFounded);
+     
+      let queryData: any = {};
   if(req.user.role === systemRoles.ADMIN && !profileFounded){
     queryData._id = id;
   }else{
@@ -103,7 +105,7 @@ export const getStafManTotalProfits = asyncHandeller(async (req: Request, res: R
     console.log(statistic);
 
     if (!statistic) {
-        return next(new Error("Failed to get statistic", { cause: 500 }));
+        return next(new Error("Failed to get statistic", { cause: 400 }));
     }
     const departmentUserId = req.user.role === systemRoles.ADMIN ? statistic[0]["رقم العامل"] : id;
     const foundedUserName = await DepartmentModel.findOne({ msempl: departmentUserId });
@@ -113,7 +115,11 @@ export const getStafManTotalProfits = asyncHandeller(async (req: Request, res: R
         inempl: doc["رقم العامل"],
         month: doc["العام"],
         deducationModel: deducationTypes.year
-      });
+      }).populate([
+      {
+        path:'inlncd'
+      }
+    ]);
       return {
         ...doc.toObject(),
         userName: foundedUserName ? foundedUserName.msname : undefined,

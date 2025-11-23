@@ -155,13 +155,16 @@ export const getAllDeductions = asyncHandeller(async (req: Request, res: Respons
         .pagination();
 
     // Execute the query
-    const deductions = await apiFeatures.mongooseQuery.populate('inlncd');
+    const deductions = await apiFeatures.mongooseQuery.populate([{
+        path:'inlncd'
+    }]);
 
     // Calculate pagination metadata
     const size = parseInt(req.query.size as string) || 10;
     const page = parseInt(req.query.page as string) || 1;
     const totalPages = Math.ceil(totalCount / size);
-
+    console.log(deductions);
+    
     res.status(200).json({
         message: "Deductions retrieved successfully",
         data: deductions,
@@ -180,7 +183,11 @@ export const getDeductionById = asyncHandeller(async (req: Request, res: Respons
         return next(new Error("Invalid deduction ID", { cause: 400 }));
     }
 
-    const deduction = await DeducationModel.findById(id).populate('inlncd');
+    const deduction = await DeducationModel.findById(id).populate([
+        {
+            path:"inlncd"
+        }
+    ]);
 
     if (!deduction) {
         return next(new Error("Deduction not found", { cause: 404 }));
@@ -220,7 +227,9 @@ export const getEmployeeDeductions = asyncHandeller(async (req: Request, res: Re
         .pagination();
 
     // Execute the query
-    const deductions = await apiFeatures.mongooseQuery.populate('inlncd');
+    const deductions = await apiFeatures.mongooseQuery.populate([{
+        path:'inlncd'
+    }]);
 
     // Calculate pagination metadata
     const size = parseInt(req.query.size as string) || 10;
@@ -257,7 +266,9 @@ export const getAllDeductionsWithFilters = asyncHandeller(async (req: Request, r
         .pagination();
 
     // Execute the query
-    const deductions = await apiFeatures.mongooseQuery.populate('inlncd');
+    const deductions = await apiFeatures.mongooseQuery.populate([{
+        path:'inlncd'
+    }]);
 
     // Calculate pagination metadata
     const size = parseInt(req.query.size as string) || 10;

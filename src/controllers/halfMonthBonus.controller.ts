@@ -89,7 +89,11 @@ export const getStafManHalfMonthBonus = asyncHandeller(async (req: Request, res:
         inempl: doc["الرقم الوظيفي"],
         month: doc.month,
         deducationModel: deducationTypes.halfMonth
-      });
+      }).populate([
+      {
+        path:'inlncd'
+      }
+    ]);
       return {
         ...doc.toObject(),
         userName: foundedUserName ? foundedUserName.msname : undefined,

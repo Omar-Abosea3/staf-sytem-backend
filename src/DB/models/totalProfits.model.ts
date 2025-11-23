@@ -11,12 +11,12 @@ const totalProfitsSchema = new mongoose.Schema({
   "معاش تكميلي": { type: Number, default: 0 },
   "الاستقطاعات": { type: Number, default: 0 },
   "م نهايه خدمه": { type: Number, default: 0 },
-  "مبلغ المكافأة":{ type: Number, default: 0 },
+  "مبلغ المكافأة": { type: Number, default: 0 },
   "صافي مكافاة": { type: Number, default: 0 },
   "تامين ادخاري": { type: Number, default: 0 },
-  "العام": { type: String},
+  "العام": { type: String },
 }, { timestamps: true });
 
-const HalfMonthBonusModel = mongoose.model("TotalProfits", totalProfitsSchema);
+const TotalProfitsModel = mongoose.model("TotalProfits", totalProfitsSchema);
 
-export default HalfMonthBonusModel;
+export default TotalProfitsModel;
