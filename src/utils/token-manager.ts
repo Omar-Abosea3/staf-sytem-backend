@@ -5,7 +5,7 @@ import {NextFunction} from 'express';
 import { Payload } from '../types/Payload.js';
 
 
-export const createToken = (id:string , userName:string , expiresIn:string = "1m") => {
+export const createToken = (id:string , userName:string , expiresIn:string = "1d") => {
     const payload : Payload = {id , userName};
     const token = jwt.sign(payload , process.env.JWT_SECRET , {expiresIn : expiresIn});
     return token;
